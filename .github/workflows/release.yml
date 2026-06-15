@@ -1,0 +1,53 @@
+name: Release
+
+# Publishes kobofix to PyPI via Trusted Publishing (OIDC) when a version tag is
+# pushed. No API token is stored anywhere — the OIDC id-token grants the upload.
+#
+# ONE-TIME PyPI setup (https://pypi.org/manage/account/publishing/):
+#   add a "pending publisher" for project kobofix with:
+#     Owner:        dmang-dev
+#     Repository:   kobofix
+#     Workflow:     release.yml
+#     Environment:  pypi
+# Then:  git tag v1.0.0 && git push origin v1.0.0
+#
+# (Trusted publishers are per-project, so this is separate from the
+#  py-marathon-utils publisher; same convention.)
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Build sdist + wheel
+        run: |
+          python -m pip install --upgrade pip build twine
+          python -m build
+      - name: Check metadata
+        run: twine check dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/*
+
+  publish:
+    name: Publish to PyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write   # required for OIDC trusted publishing
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: dist
+          path: dist
+      - uses: pypa/gh-action-pypi-publish@release/v1

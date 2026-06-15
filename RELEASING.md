@@ -22,18 +22,36 @@ Then enable the web app: **GitHub → repo → Settings → Pages → Build and
 deployment → Source: GitHub Actions**. The included `.github/workflows/pages.yml`
 publishes `web/` to `https://dmang-dev.github.io/kobofix/` on every push.
 
-## 2. PyPI — `pip install kobofix`
+## 2. PyPI — `pip install kobofix` (Trusted Publishing, no token)
 
-Artifacts are built in `dist/` and pass `twine check`. Use a PyPI API token.
+Publishing is automated via `.github/workflows/release.yml` using PyPI Trusted
+Publishing (OIDC) — no API token is stored anywhere.
+
+**One-time** (https://pypi.org/manage/account/publishing/ → "Add a pending
+publisher"), register for project **kobofix**:
+
+| Field | Value |
+|---|---|
+| PyPI Project Name | `kobofix` |
+| Owner | `dmang-dev` |
+| Repository name | `kobofix` |
+| Workflow name | `release.yml` |
+| Environment name | `pypi` |
+
+(Trusted publishers are per-project, so this is a *separate* registration from
+`py-marathon-utils`, same convention.)
+
+Then publish by pushing a version tag:
 
 ```powershell
 cd C:\epub
-python -m build                      # refresh dist/ if you changed anything
-python -m twine check dist/*
-# optional dry run on TestPyPI first:
-# python -m twine upload --repository testpypi dist/*
-python -m twine upload dist/*        # prompts for token (user = __token__)
+git tag v1.0.0
+git push origin v1.0.0
 ```
+
+The Release workflow builds, runs `twine check`, and uploads via OIDC. Manual
+fallback if ever needed: `python -m build; python -m twine upload dist/*`
+(user `__token__`, password a PyPI token).
 
 ## 3. npm — `npm i -g kobofix`
 
