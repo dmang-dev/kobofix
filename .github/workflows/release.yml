@@ -51,3 +51,22 @@ jobs:
           name: dist
           path: dist
       - uses: pypa/gh-action-pypi-publish@release/v1
+
+  publish-npm:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write   # OIDC for npm Trusted Publishing + provenance
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+      - name: Ensure npm supports trusted publishing (>= 11.5.1)
+        run: npm install -g npm@latest
+      - name: Publish (OIDC trusted publishing + provenance)
+        working-directory: web
+        run: npm publish --provenance --access public
+

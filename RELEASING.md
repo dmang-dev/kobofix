@@ -58,10 +58,18 @@ fallback if ever needed: `python -m build; python -m twine upload dist/*`
 The publishable package lives in `web/` (name `kobofix`, the Node CLI + library;
 the web-app files are excluded by the `files` whitelist).
 
+**1.0.0 was published manually** (npm requires a package to exist before a trusted
+publisher can be attached) and **Trusted Publishing (OIDC) is now configured**
+(GitHub Actions, repo `dmang-dev/kobofix`, workflow `release.yml`, no environment).
+So future versions publish automatically from `release.yml` on a `v*` tag — no
+token stored. Just bump `web/package.json` (in sync with `pyproject.toml` and
+`kobofix.py`) and push the tag.
+
+Manual fallback (creates/updates the package locally):
 ```powershell
 cd C:\epub\web
-npm login                            # as your npm account
-npm publish --access public          # dry run first: npm publish --dry-run
+npm login
+npm publish --provenance --access public   # dry run: npm publish --dry-run
 ```
 
 ## 4. GitHub — EPUBCheck fork (`epubcheck-kobo`)
