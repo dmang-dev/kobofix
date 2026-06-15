@@ -1,0 +1,10 @@
+# Normalize all text to LF in the repo (avoids CRLF churn on Windows checkouts).
+* text=auto eol=lf
+
+# Binary / generated assets that must never be line-ending munged.
+*.epub binary
+*.jar binary
+*.png binary
+*.zip binary
+*.tgz binary
+*.whl binary

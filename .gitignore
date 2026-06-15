@@ -1,0 +1,21 @@
+# Python build artifacts
+dist/
+build/
+*.egg-info/
+__pycache__/
+*.py[cod]
+
+# Node / npm
+web/node_modules/
+web/*.tgz
+web/test/out-*.epub
+
+# Downloaded or generated (regenerate with the *.py scripts)
+tools/
+samples/
+*.epub
+_*.json
+
+# OS cruft
+.DS_Store
+Thumbs.db

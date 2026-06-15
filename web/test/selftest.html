@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"/><title>kobofix browser self-test</title>
+<style>body{font:15px/1.5 system-ui;margin:24px;max-width:760px}
+  pre{background:#f4f4f4;padding:12px;border-radius:8px;white-space:pre-wrap}
+  .ok{color:#1b7f3b;font-weight:700}.fail{color:#c62828;font-weight:700}</style>
+</head>
+<body>
+<h1>kobofix — browser engine self-test</h1>
+<p>Runs the real engine in this browser against a sample EPUB served over HTTP.</p>
+<pre id="log">running…</pre>
+<script src="../vendor/jszip.min.js"></script>
+<script type="module">
+import { readEntries, processEntries, lintEntries, buildEpub, decodeText, classify, parseManifest } from "../kobofix.js";
+import { splitCodeSegments, DEFAULT_OPTS } from "../kobocss.js";
+
+const log = (m) => { document.getElementById("log").textContent += "\n" + m; };
+const BANNED = ["calc(","min(","max(","clamp(","var(","env("];
+const codeOf = (t) => splitCodeSegments(t).filter(s=>s.code).map(s=>s.text).join("");
+
+function verifyOcf(bytes){
+  const dv = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  if (dv.getUint32(0,true)!==0x04034b50) return "bad signature";
+  const method=dv.getUint16(8,true), nameLen=dv.getUint16(26,true), extraLen=dv.getUint16(28,true);
+  const name=new TextDecoder().decode(bytes.subarray(30,30+nameLen));
+  const data=new TextDecoder().decode(bytes.subarray(30+nameLen+extraLen,30+nameLen+extraLen+20));
+  if(name!=="mimetype")return "first entry "+name;
+  if(method!==0)return "mimetype compressed";
+  if(extraLen!==0)return "mimetype extra field";
+  if(data!=="application/epub+zip")return "mimetype bytes";
+  return null;
+}
+
+(async () => {
+  let fails = 0;
+  document.getElementById("log").textContent = "";
+  try {
+    log("JSZip global present: " + (typeof window.JSZip === "function"));
+    const ab = await (await fetch("../../sample-validpkg-badcss.epub")).arrayBuffer();
+    log("fetched sample epub: " + ab.byteLength + " bytes");
+    const { entries, inMt } = await readEntries(window.JSZip, ab);
+    const lint = lintEntries(entries, inMt).findings;
+    const counts = {}; for (const f of lint) counts[f.rule]=(counts[f.rule]||0)+1;
+    log("lint findings: " + lint.length + " " + JSON.stringify(counts));
+    const res = processEntries(entries, { ...DEFAULT_OPTS });
+    log("auto-fixes: changes=" + res.changes.length + " vars=" + res.varmapSize + " warnings=" + res.warnings.length);
+    const media = parseManifest(res.entries);
+    for (const {name,bytes} of res.entries) {
+      const k = classify(name, media); if (k!=="css"&&k!=="markup") continue;
+      const code = codeOf(decodeText(bytes)).toLowerCase();
+      for (const b of BANNED) if (code.includes(b)) { fails++; log("FAIL "+name+" has "+b); }
+    }
+    const fixed = await buildEpub(window.JSZip, res.entries);
+    const ocf = verifyOcf(fixed);
+    if (ocf) { fails++; log("FAIL OCF: " + ocf); } else log("OCF packaging valid (mimetype first/STORED/no-extra)");
+    log(fails ? `\nFAILED (${fails})` : "\nALL BROWSER CHECKS PASSED");
+    document.title = fails ? "FAILED" : "PASSED";
+    document.body.insertAdjacentHTML("beforeend",
+      `<p class="${fails?"fail":"ok"}" id="verdict">${fails?"FAILED":"PASSED — engine works in-browser"}</p>`);
+  } catch (e) {
+    log("ERROR: " + (e && e.stack ? e.stack : e));
+    document.title = "FAILED";
+    document.body.insertAdjacentHTML("beforeend", `<p class="fail" id="verdict">FAILED: ${e}</p>`);
+  }
+})();
+</script>
+</body>
+</html>

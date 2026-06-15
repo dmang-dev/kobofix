@@ -1,0 +1,26 @@
+{
+  "name": "kobofix",
+  "version": "1.0.0",
+  "description": "Make EPUBs work on Kobo e-readers (Adobe RMSDK): detect and fix the modern CSS that breaks them. Node CLI + library + browser engine.",
+  "type": "module",
+  "bin": { "kobofix": "./cli.mjs" },
+  "main": "./kobofix.js",
+  "exports": {
+    ".": "./kobofix.js",
+    "./css": "./kobocss.js"
+  },
+  "files": ["kobocss.js", "kobofix.js", "cli.mjs", "README.md"],
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node test/run.mjs"
+  },
+  "dependencies": {
+    "jszip": "^3.10.1"
+  },
+  "keywords": ["epub", "kobo", "rmsdk", "css", "ebook", "epubcheck", "adobe-digital-editions", "kepub"],
+  "author": "dmang-dev",
+  "license": "MIT",
+  "homepage": "https://github.com/dmang-dev/kobofix#readme",
+  "repository": { "type": "git", "url": "git+https://github.com/dmang-dev/kobofix.git" },
+  "bugs": { "url": "https://github.com/dmang-dev/kobofix/issues" }
+}

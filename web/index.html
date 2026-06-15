@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>kobofix — make your EPUB work on Kobo</title>
+<meta name="description" content="Detect and fix the CSS that makes a valid EPUB fail on Kobo e-readers (Adobe RMSDK). Runs entirely in your browser."/>
+<style>
+  :root{
+    --bg:#f6f7f9; --card:#fff; --ink:#1a1d21; --muted:#5b6470; --line:#e4e7eb;
+    --accent:#6a1b9a; --accent2:#4527a0;
+    --err:#c62828; --errbg:#fdecea; --warn:#b26a00; --warnbg:#fff6e5;
+    --info:#5b6470; --infobg:#eef1f4; --ok:#1b7f3b; --okbg:#e8f6ed;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.55 system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:880px;margin:0 auto;padding:28px 20px 80px}
+  header h1{margin:0 0 4px;font-size:30px;letter-spacing:-.02em}
+  header h1 .k{color:var(--accent)}
+  .tag{color:var(--muted);margin:0 0 8px}
+  .privacy{display:inline-block;font-size:13px;color:var(--ok);background:var(--okbg);
+    border:1px solid #bfe6cd;border-radius:999px;padding:3px 11px;margin-top:6px}
+  .drop{margin:22px 0;background:var(--card);border:2px dashed var(--line);border-radius:14px;
+    padding:40px 20px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--accent);background:#fbf7fe}
+  .drop strong{font-size:18px}
+  .drop .sub{color:var(--muted);font-size:14px;margin-top:6px}
+  .btn{display:inline-block;border:0;border-radius:10px;background:var(--accent);color:#fff;
+    font-size:15px;font-weight:600;padding:11px 18px;cursor:pointer;text-decoration:none}
+  .btn:hover{background:var(--accent2)}
+  .btn.ghost{background:#eee;color:var(--ink)}
+  #results{display:none;margin-top:8px}
+  .cards{display:flex;gap:12px;flex-wrap:wrap;margin:16px 0}
+  .scard{flex:1 1 150px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+  .scard .n{font-size:30px;font-weight:700;line-height:1}
+  .scard .l{color:var(--muted);font-size:13px;margin-top:4px}
+  .scard.err .n{color:var(--err)} .scard.warn .n{color:var(--warn)} .scard.ok .n{color:var(--ok)}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:4px 18px 14px;margin:14px 0}
+  .panel h2{font-size:17px;margin:16px 0 8px}
+  .verdict{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);
+    border-radius:12px;padding:16px 18px;margin:6px 0 2px}
+  .verdict .big{font-size:18px;font-weight:700}
+  .verdict.bad{border-color:#f1c4c0;background:var(--errbg)}
+  .verdict.good{border-color:#bfe6cd;background:var(--okbg)}
+  .dl{margin:16px 0 4px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
+  .badge{display:inline-block;border-radius:6px;padding:1px 7px;font-size:12px;font-weight:700;white-space:nowrap}
+  .badge.error{background:var(--errbg);color:var(--err)}
+  .badge.warning{background:var(--warnbg);color:var(--warn)}
+  .badge.info{background:var(--infobg);color:var(--info)}
+  code,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:13px}
+  .loc{color:var(--muted)}
+  .rulemsg{color:var(--muted);font-size:13px}
+  .arrow{color:var(--accent);font-weight:700}
+  .muted{color:var(--muted)} .small{font-size:13px}
+  details{margin:6px 0} summary{cursor:pointer;font-weight:600}
+  footer{margin-top:34px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:16px}
+  footer a{color:var(--accent2)}
+  .err-msg{background:var(--errbg);border:1px solid #f1c4c0;color:var(--err);border-radius:10px;padding:12px 14px;margin:12px 0}
+  .spin{display:none;margin:18px 0;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1><span class="k">kobofix</span> — make your EPUB work on Kobo</h1>
+    <p class="tag">Your EPUB passes <code>epubcheck</code> but Kobo says “corrupted” or strips your styling?
+       That’s Adobe’s legacy RMSDK engine choking on modern CSS. Drop your file below to find — and fix — exactly what breaks.</p>
+    <span class="privacy">🔒 100% in your browser. Your book never leaves your device.</span>
+  </header>
+
+  <div id="drop" class="drop" tabindex="0" role="button" aria-label="Choose or drop an EPUB file">
+    <strong>Drop an .epub here, or click to choose</strong>
+    <div class="sub">Nothing is uploaded — all processing happens locally.</div>
+    <input id="file" type="file" accept=".epub,application/epub+zip" hidden/>
+  </div>
+
+  <div id="spin" class="spin">Analyzing… (large books with images may take a few seconds)</div>
+  <div id="error" class="err-msg" style="display:none"></div>
+
+  <div id="results">
+    <div id="verdict"></div>
+    <div class="dl" id="dl"></div>
+    <div class="cards" id="cards"></div>
+    <div class="panel" id="findings"></div>
+    <div class="panel" id="fixed"></div>
+    <div class="panel" id="manual"></div>
+  </div>
+
+  <footer>
+    <p><strong>What is this?</strong> Kobo renders sideloaded EPUBs through Adobe’s legacy “RMSDK”
+       engine (CSS frozen ~2013). One modern value token — <code>calc()</code>, <code>min()</code>,
+       <code>clamp()</code>, <code>var()</code> — makes it drop your <em>entire</em> stylesheet or refuse to
+       open the book, even though the CSS is valid EPUB3. kobofix removes/resolves those tokens, converts
+       <code>rem</code>/viewport units, fixes <code>mimetype</code> packaging, and flags layout features
+       (flexbox/grid) that need a human. Inspired by
+       <a href="https://andreklein.net/your-epub-is-fine-kobo-disagrees-blame-adobe/" target="_blank" rel="noopener">this write-up</a>.</p>
+    <p class="small">Rule ids: <code>KOBO-000</code> packaging · <code>KOBO-001</code> value functions ·
+       <code>KOBO-002</code> viewport units · <code>KOBO-003</code> empty @media ·
+       <code>KOBO-004</code> rem · <code>KOBO-010+</code> flexbox/grid/transform (manual review).
+       The same checks run as a CLI and merge with EPUBCheck — see the project README.</p>
+  </footer>
+</div>
+
+<script src="vendor/jszip.min.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+name: Deploy kobofix web to GitHub Pages
+
+# The web app is 100% static (no build step) — it just needs the engine files
+# and the vendored JSZip served over HTTPS. This assembles a clean site folder
+# (no node_modules / tests) and publishes it.
+
+on:
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble static site
+        run: |
+          mkdir -p _site/vendor
+          cp web/index.html web/app.js web/kobofix.js web/kobocss.js _site/
+          cp web/vendor/jszip.min.js _site/vendor/
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4
