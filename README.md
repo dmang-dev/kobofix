@@ -1,5 +1,11 @@
 # kobofix
 
+[![PyPI](https://img.shields.io/pypi/v/kobofix?logo=pypi&logoColor=white&label=PyPI)](https://pypi.org/project/kobofix/)
+[![npm](https://img.shields.io/npm/v/kobofix?logo=npm&label=npm)](https://www.npmjs.com/package/kobofix)
+[![Web app](https://img.shields.io/badge/web%20app-live-brightgreen?logo=githubpages&logoColor=white)](https://dmang-dev.github.io/kobofix/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/pypi/pyversions/kobofix?logo=python&logoColor=white)](https://pypi.org/project/kobofix/)
+
 Make an EPUB that **passes `epubcheck` but won't open (or renders broken) on a Kobo**
 work on a Kobo. Pure Python, standard library only — no `pip install`.
 

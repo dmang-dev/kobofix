@@ -90,9 +90,12 @@ Artifacts → `epubcheck-kobo`). Run `epubcheck-kobo` with:
 
 ## Notes
 
-- **Versions are immutable** on PyPI and npm — bump `version` in `pyproject.toml`
-  and `web/package.json` (keep them in sync, and with `VERSION` in `kobofix.py`)
-  before re-publishing.
+- **Versions are immutable** on PyPI and npm. Use the helper to keep all three
+  version strings in sync (`pyproject.toml`, `web/package.json`, `kobofix.py`):
+  - `python bump_version.py` — show current versions / fail if out of sync (CI-friendly)
+  - `python bump_version.py 1.0.1` — set all three, then it prints the commit/tag steps
+  Then move the relevant `CHANGELOG.md` items from `[Unreleased]` into a new
+  `[1.0.1]` section before tagging.
 - **First publish names**: `kobofix` was confirmed free on PyPI, npm, and GitHub.
 - Re-run `python tools\pii_scan.py` after any rebuild if you want to re-verify the
   artifacts carry no personal info.
