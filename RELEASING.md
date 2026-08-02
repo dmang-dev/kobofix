@@ -14,13 +14,15 @@ artifact or commit). You run the outward-facing publish steps yourself.
 
 ```powershell
 cd C:\epub
-gh repo create dmang-dev/kobofix --public --description "Make EPUBs work on Kobo e-readers (Adobe RMSDK)." --homepage "https://dmang-dev.github.io/kobofix/"
+gh repo create dmang-dev/kobofix --public --description "Make EPUBs work on Kobo e-readers (Adobe RMSDK)." --homepage "https://dmang.com/kobofix/"
 git push -u origin main
 ```
 
 Then enable the web app: **GitHub → repo → Settings → Pages → Build and
 deployment → Source: GitHub Actions**. The included `.github/workflows/pages.yml`
-publishes `web/` to `https://dmang-dev.github.io/kobofix/` on every push.
+publishes `web/` to `https://dmang.com/kobofix/` on every push. (The account
+uses `dmang.com` as its Pages custom domain, so the `dmang-dev.github.io`
+address 301s there.)
 
 ## 2. PyPI — `pip install kobofix` (Trusted Publishing, no token)
 
